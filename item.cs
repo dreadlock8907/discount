@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 
-namespace HomeTask
+namespace hometask
 {
-  interface IItem
+  public interface IItem
   {
     void SetBasePrice(int price);
-    double GetTotalPrice();
+    double GetPrice();
     bool HasDiscount();
   }
 
-  class Item : IItem
+  public class Item : IItem
   {
     private int _base_price;
 
@@ -24,7 +24,7 @@ namespace HomeTask
       _base_price = price;
     }
 
-    public double GetTotalPrice()
+    public double GetPrice()
     {
       return _base_price;
     }
@@ -35,7 +35,7 @@ namespace HomeTask
     }
   }
   
-  class DiscountedItem : IItem
+  public class DiscountedItem : IItem
   {
     private int _discount_percent;
     private IItem _item;
@@ -51,9 +51,9 @@ namespace HomeTask
       _item.SetBasePrice(price);
     }
 
-    public double GetTotalPrice()
+    public double GetPrice()
     {
-      return _item.GetTotalPrice() - _item.GetTotalPrice() / 100 * _discount_percent;
+      return _item.GetPrice() - _item.GetPrice() / 100 * _discount_percent;
     }
 
     public bool HasDiscount()
@@ -67,7 +67,7 @@ namespace HomeTask
     public static IEnumerable<DeliveryWay> GetPossibleWays(IItem item)
     {
       List<DeliveryWay> ways = new List<DeliveryWay>();
-      ways.Add(new OnTheSpotDeliveryWay(item));
+      ways.Add(new PickUpPointDeliveryWay(item));
       if(!item.HasDiscount())
         ways.Add(new AddressedDeliveryWay(item));
       return ways;
@@ -86,15 +86,15 @@ namespace HomeTask
     public abstract void Deliver();
   }
 
-  class OnTheSpotDeliveryWay : DeliveryWay
+  class PickUpPointDeliveryWay : DeliveryWay
   {
-    public OnTheSpotDeliveryWay(IItem item) : base(item)
+    public PickUpPointDeliveryWay(IItem item) : base(item)
     {
     }
 
     public override void Deliver()
     {
-      Console.WriteLine($"Claimed by customer");
+      Console.WriteLine("Claimed by customer");
     }
   }
   
@@ -106,7 +106,53 @@ namespace HomeTask
 
     public override void Deliver()
     {
-      Console.WriteLine($"Delivered to address");
+      Console.WriteLine("Delivered to address");
     }
   }
+
+  public class ItemShowcase
+  {
+    Item _item;
+    readonly List<IItem> _discounted_items;
+    
+    public ItemShowcase(Item item)
+    {
+      _item = item;
+      _discounted_items = new List<IItem>()
+      {
+        new DiscountedItem(_item, discount_percent: 10),
+        new DiscountedItem(_item, discount_percent: 20),
+        new DiscountedItem(_item, discount_percent: 30)
+      };
+    }
+
+    public void UpdateBasePrice(int new_price)
+    {
+      _item.SetBasePrice(new_price);
+    }
+
+    public void ShowAllPrices()
+    {
+      for (int i = 0; i < _discounted_items.Count; i++)
+        ShowPriceTag(_discounted_items[i]);
+    }
+    
+    void ShowPriceTag(IItem item)
+    {
+      Console.WriteLine($"Item price: {item.GetPrice()}");
+    }
+  }
+
+  public static class Test
+  {
+    public static void Run()
+    {
+      ItemShowcase showcase = new ItemShowcase(new Item(100));
+      showcase.ShowAllPrices();
+      showcase.UpdateBasePrice(200);
+      showcase.ShowAllPrices();
+    }
+  }
+  
+  
 }
